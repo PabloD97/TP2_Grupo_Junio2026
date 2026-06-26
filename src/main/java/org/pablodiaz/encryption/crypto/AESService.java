@@ -19,7 +19,7 @@ public class AESService {
     private static final int IV_LENGTH=12;
     private static final int TAG_LENGTH=128;
 
-    public EncryptionResult encrypt(byte[] data, SecretKey key, byte[] salt) throws EncryptionException, NoSuchPaddingException, NoSuchAlgorithmException, InvalidAlgorithmParameterException, InvalidKeyException, IllegalBlockSizeException, BadPaddingException {
+    public EncryptionResult encrypt(byte[] data, SecretKey key, byte[] salt, String filename) throws EncryptionException, NoSuchPaddingException, NoSuchAlgorithmException, InvalidAlgorithmParameterException, InvalidKeyException, IllegalBlockSizeException, BadPaddingException {
         log.info("calling method encrypt()");
         try {
             SecureRandom random = new SecureRandom();
@@ -36,7 +36,7 @@ public class AESService {
             String encryptString = Base64.getEncoder().encodeToString(encryptedData);
             String ivString = Base64.getEncoder().encodeToString(iv);
             String saltString = Base64.getEncoder().encodeToString(salt);
-            return new EncryptionResult(encryptString, ivString, saltString);
+            return new EncryptionResult(encryptString, ivString, saltString, filename);
         } catch (NoSuchAlgorithmException | NoSuchPaddingException | InvalidKeyException | IllegalBlockSizeException | BadPaddingException e) {
             log.error(e.getMessage());
             throw e;

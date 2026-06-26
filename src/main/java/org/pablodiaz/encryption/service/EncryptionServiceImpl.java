@@ -8,6 +8,7 @@ import org.pablodiaz.encryption.crypto.KeyGeneratorService;
 import org.pablodiaz.encryption.dto.DecryptRequestDto;
 import org.pablodiaz.encryption.exception.EncryptionException;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.crypto.SecretKey;
 import java.security.SecureRandom;
@@ -21,16 +22,17 @@ public class EncryptionServiceImpl implements EncryptionService{
     private final KeyGeneratorService  keyGeneratorService;
 
     @Override
-    public EncryptionResult encryptFile(byte[] fileBytes, String password) throws Exception {
+    public EncryptionResult encryptFile(MultipartFile file, String password) throws Exception {
         log.info("Encrypt file requested. Size={} bytes",
-                fileBytes.length);
+                file.getBytes().length);
+        byte[] fileBytes = file.getBytes();
         try{
             SecureRandom random = new SecureRandom();
             byte[] salt = new byte[16];
             random.nextBytes(salt);
             SecretKey secretKey = keyGeneratorService.generateKey(password, salt);
             log.info("Key generated successfully");
-            return aesService.encrypt(fileBytes, secretKey, salt);
+            return aesService.encrypt(fileBytes, secretKey, salt, file.getOriginalFilename());
         }catch (Exception error){
             log.error("error while encrypting file {} with message {}",fileBytes,error.getMessage());
             throw new EncryptionException(error.getMessage(), error);
@@ -47,7 +49,8 @@ public class EncryptionServiceImpl implements EncryptionService{
             return aesService.decrypt(decryptRequest.getEncryptDataBytes(), secretKey, decryptRequest.getIvBytes());
         } catch (EncryptionException error) {
             log.error("error while decrypt file {} with message {}",decryptRequest.getEncryptData(),error.getMessage());
-            throw new EncryptionException("Error encrypting file",error);
+            String message = "Error al desencriptar archivo: " + decryptRequest.getFilename() + " Error: " + error.getMessage();
+            throw new EncryptionException(message,error);
         }
     }
 

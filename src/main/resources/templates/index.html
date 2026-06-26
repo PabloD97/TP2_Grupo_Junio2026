@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>AES-256</title>
+    <link rel="stylesheet" th:href="@{/css/98.css}">
+</head>
+<body>
+
+<div class="window" style="width: 700px">
+    <div class="title-bar">
+        <div class="title-bar-text">AES-256 Encryption Tool</div>
+
+        <div class="title-bar-controls">
+            <button aria-label="Minimize"></button>
+            <button aria-label="Maximize"></button>
+            <button aria-label="Close"></button>
+        </div>
+    </div>
+
+    <div class="window-body">
+        <h2>Cifrar archivo</h2>
+
+        <input type="file" id="file">
+        <br><br>
+
+        <input type="password" id="password" placeholder="Contraseña">
+        <br><br>
+
+        <button type="button" onclick="encrypt()">Cifrar</button>
+
+        <hr>
+
+        <h3>Resultado</h3>
+
+        <label>Encrypted Data:</label>
+        <pre id="encryptData"></pre>
+
+        <label>IV:</label>
+        <pre id="iv"></pre>
+
+        <label>Salt:</label>
+        <pre id="salt"></pre>
+
+        <label>Filename:</label>
+        <pre id="filename"></pre>
+
+        <hr>
+
+        <h2>Desencriptar archivo</h2>
+        <div>
+            <h4 id="errorTitle" style="display:none;">Errores</h4>
+            <div id="error" style="color:red;"></div>
+        </div>
+        <form id="decryptForm">
+            <div>
+                <label for="encryptData">Datos cifrados:</label><br>
+
+                <textarea id="encryptDataDecrypt"
+                          name="encryptData"
+                          rows="10"
+                          cols="80"
+                          required>
+        </textarea>
+            </div>
+
+            <br>
+
+            <div>
+                <label for="ivDecrypt">IV:</label><br>
+
+                <input id="ivDecrypt"
+                       type="text"
+                       name="iv"
+                       size="60"
+                       required/>
+            </div>
+
+            <br>
+
+            <div>
+                <label for="saltDecrypt">Salt:</label><br>
+
+                <input id="saltDecrypt"
+                       type="text"
+                       name="salt"
+                       size="60"
+                       required/>
+            </div>
+
+            <br>
+
+            <div>
+                <label for="passwordDecrypt">Contraseña:</label><br>
+
+                <input id="passwordDecrypt"
+                       type="password"
+                       name="password"
+                       required/>
+            </div>
+
+            <div>
+                <label for="filenameDecrypt">Filename:</label><br>
+
+                <input id="filenameDecrypt"
+                       type="text"
+                       name="filename"
+                       required/>
+            </div>
+
+            <br>
+
+            <button type="submit">
+                Desencriptar
+            </button>
+
+        </form>
+
+    </div>
+</div>
+
+<script>
+    async function encrypt() {
+        const file = document.getElementById("file").files[0];
+        const password = document.getElementById("password").value;
+
+        const formData = new FormData();
+        formData.append("file", file);
+        formData.append("password", password);
+
+        const response = await fetch("/encryption/encrypt", {
+            method: "POST",
+            body: formData
+        });
+
+        if (!response.ok) {
+            const error = await response.text();
+            alert("Error: " + error);
+            return;
+        }
+
+        const data = await response.json();
+
+        document.getElementById("encryptData").innerText = data.encryptData;
+        document.getElementById("iv").innerText = data.iv;
+        document.getElementById("salt").innerText = data.salt;
+        document.getElementById("filename").innerText = data.filename;
+    }
+
+    document.getElementById("decryptForm").addEventListener("submit", decrypt);
+
+    async function decrypt(e){
+        e.preventDefault();
+
+        const formData = new FormData();
+        formData.append("encryptData", document.getElementById("encryptDataDecrypt").value);
+        formData.append("iv", document.getElementById("ivDecrypt").value);
+        formData.append("salt", document.getElementById("saltDecrypt").value);
+        formData.append("password", document.getElementById("passwordDecrypt").value);
+        formData.append("filename", document.getElementById("filenameDecrypt").value);
+
+        try{
+            const response = await fetch("/encryption/decrypt", {
+                method: "POST",
+                body: formData
+            });
+            if (!response.ok) {
+                const errorText = await response.text();
+                document.getElementById("error").innerText = errorText;
+                document.getElementById("errorTitle").style.display = "block";
+                return;
+            } else {
+                document.getElementById("error").innerText = "";
+                document.getElementById("errorTitle").style.display = "none";
+            }
+            const blob = await response.blob();
+
+            const contentDisposition = response.headers.get("Content-Disposition");
+            let filename = "file";
+
+            if (contentDisposition) {
+                const match = contentDisposition.match(/filename="(.+)"/);
+                if (match) filename = match[1];
+            }
+
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            window.URL.revokeObjectURL(url);
+
+            document.getElementById("error").innerText = "";
+
+        } catch (err) {
+            document.getElementById("error").innerText = "Error de red";
+        }
+    }
+</script>
+
+</body>
+</html>

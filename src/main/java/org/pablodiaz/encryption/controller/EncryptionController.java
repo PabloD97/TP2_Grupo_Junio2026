@@ -1,6 +1,7 @@
 package org.pablodiaz.encryption.controller;
 
 import lombok.extern.log4j.Log4j2;
+import org.pablodiaz.encryption.crypto.EncryptionResult;
 import org.pablodiaz.encryption.dto.DecryptRequestDto;
 import org.pablodiaz.encryption.service.EncryptionService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,29 +22,37 @@ public class EncryptionController {
 
 
     @PostMapping("/encrypt")
-    public ResponseEntity<?> encrypt(@RequestParam MultipartFile file,
-                                                    @RequestParam String password){
-        log.info("calling endpoint encrypt({})",file.getOriginalFilename());
+    public ResponseEntity<EncryptionResult> encrypt(
+            @RequestParam MultipartFile file,
+            @RequestParam String password) {
+
+        log.info("calling encrypt({})", file.getOriginalFilename());
+
         if (file.isEmpty()) {
-            return ResponseEntity.badRequest()
-                    .body("File is empty");
+            return ResponseEntity.badRequest().build();
         }
+
         try {
-            return ResponseEntity
-                    .ok()
-                    .contentType(MediaType.APPLICATION_OCTET_STREAM)
-                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + file.getOriginalFilename() + ".enc\"")
-                    .body(service.encryptFile(file.getBytes(), password));
-        }catch (Exception e){
-            return  ResponseEntity.badRequest().body(e.getMessage());
+            EncryptionResult result =
+                    service.encryptFile(file, password);
+
+            return ResponseEntity.ok(result);
+
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().build();
         }
     }
 
     @PostMapping("/decrypt")
-    public ResponseEntity<?> decrypt(@RequestBody DecryptRequestDto request){
+    public ResponseEntity<?> decrypt(@ModelAttribute DecryptRequestDto request){
         log.info("calling endpoint decrypt({},{},{})",request.getEncryptData(),request.getIv(), request.getSalt());
         try {
-            return ResponseEntity.ok(service.decrypt(request));
+            return ResponseEntity
+                    .ok()
+                    .header(HttpHeaders.CONTENT_DISPOSITION,
+                            "attachment; filename=\"" + request.getFilename() + "\"")
+                    .contentType(MediaType.APPLICATION_OCTET_STREAM)
+                    .body(service.decrypt(request));
         }catch (Exception e){
             return  ResponseEntity.badRequest().body(e.getMessage());
         }
