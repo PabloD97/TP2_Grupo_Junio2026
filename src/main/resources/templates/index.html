@@ -8,7 +8,7 @@
 
 <div class="window" style="width: 700px">
     <div class="title-bar">
-        <div class="title-bar-text">AES-256 Encryption Tool</div>
+        <div class="title-bar-text">AES-256</div>
 
         <div class="title-bar-controls">
             <button aria-label="Minimize"></button>
@@ -18,7 +18,7 @@
     </div>
 
     <div class="window-body">
-        <h2>Cifrar archivo</h2>
+        <h2>Encriptar archivo</h2>
 
         <input type="file" id="file">
         <br><br>
@@ -26,15 +26,20 @@
         <input type="password" id="password" placeholder="Contraseña">
         <br><br>
 
-        <button type="button" onclick="encrypt()">Cifrar</button>
+        <button type="button" onclick="encrypt()">Encriptar</button>
 
         <hr>
 
-        <h3>Resultado</h3>
+        <h3>Resultado:</h3>
 
-        <label>Encrypted Data:</label>
-        <pre id="encryptData"></pre>
+        <label for="encryptData">Encrypted Data:</label><br>
 
+        <textarea
+                id="encryptData"
+                rows="8"
+                cols="80"
+                readonly></textarea>
+        <br>
         <label>IV:</label>
         <pre id="iv"></pre>
 
@@ -48,19 +53,18 @@
 
         <h2>Desencriptar archivo</h2>
         <div>
-            <h4 id="errorTitle" style="display:none;">Errores</h4>
+            <h4 id="errorTitle" style="display:none;">Errores:</h4>
             <div id="error" style="color:red;"></div>
         </div>
         <form id="decryptForm">
             <div>
-                <label for="encryptData">Datos cifrados:</label><br>
+                <label for="encryptData">Datos encriptados:</label><br>
 
                 <textarea id="encryptDataDecrypt"
                           name="encryptData"
                           rows="10"
                           cols="80"
-                          required>
-        </textarea>
+                          required></textarea>
             </div>
 
             <br>
@@ -83,7 +87,6 @@
                 <input id="saltDecrypt"
                        type="text"
                        name="salt"
-                       size="60"
                        required/>
             </div>
 
@@ -193,8 +196,9 @@
 
             document.getElementById("error").innerText = "";
 
-        } catch (err) {
-            document.getElementById("error").innerText = "Error de red";
+        } catch (error) {
+            document.getElementById("error").innerText = "No fue posible conectarse con el servidor. Verifique que la aplicación esté ejecutándose e intente nuevamente.";
+            console.error("Error al desencriptar:", error);
         }
     }
 </script>
